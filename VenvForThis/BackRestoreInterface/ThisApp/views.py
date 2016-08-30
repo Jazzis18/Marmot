@@ -62,10 +62,10 @@ def mssql_connect(name):
     """.format(os.path.splitext(path.basename(name))[0])
 
     insert_listdb_query = """
+    delete from [master].[dbo].[ListDb] where name = '{0}'
     insert [master].[dbo].[ListDb] values(null, '{0}', '{0}', null, null,
     null, null, null, null, null, null, null, -1, null, 0)
     """.format(os.path.splitext(path.basename(name))[0])
-
     cur.execute(size_query)
     for row_header in cur.fetchall():
             print("""
@@ -144,10 +144,28 @@ def remove_from_listdb(name):
     connection.close()
 
 
+def drop_database(name):
+    connection = pyodbc.connect(driver='{SQL Server}',
+                                server='oirc-srv-test04', Trusted_Connection=True, autocommit=True)
+    drop_query = """
+    use master
+    alter database [{0}] set single_user with rollback immediate
+    drop database [{0}]
+    """.format(name)
+    cur = connection.cursor()
+    cur.execute(drop_query)
+    cur.close()
+    connection.close()
+
+
 def remove_database(request):
     try:
         for i in range(len(request.GET.getlist('base'))):
+            try:
+                drop_database(request.GET.getlist('base')[i])
                 remove_from_listdb(request.GET.getlist('base')[i])
+            except Exception as ThisEx:
+                return HttpResponse(render_to_response('error.html', {'ThisEx': ThisEx}))
         return HttpResponse(
             render_to_response('index.html', {'backup_dir': list(get_backup_dir()), 'list_db': list(get_list_db())}))
     except Exception as ThisEx:
