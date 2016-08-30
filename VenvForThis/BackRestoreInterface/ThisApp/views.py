@@ -1,4 +1,4 @@
-from django.shortcuts import render, render_to_response
+from django.shortcuts import render, render_to_response, redirect
 from django.http import HttpResponse
 import pyodbc
 import time
@@ -45,7 +45,8 @@ def mssql_connect(name):
 
     progress_query = """
     SELECT r.session_id,r.command,CONVERT(NUMERIC(6,2),r.percent_complete)
-    AS [PercentComplete],CONVERT(VARCHAR(20),DATEADD(ms,r.estimated_completion_time,GetDate()),20) AS [ETA Completion Time],
+    AS [PercentComplete],CONVERT(VARCHAR(20),
+    DATEADD(ms,r.estimated_completion_time,GetDate()),20) AS [ETA Completion Time],
     CONVERT(NUMERIC(10,2),r.total_elapsed_time/1000.0/60.0) AS [Elapsed Min],
     CONVERT(NUMERIC(10,2),r.estimated_completion_time/1000.0/60.0) AS [ETA Min],
     CONVERT(NUMERIC(10,2),r.estimated_completion_time/1000.0/60.0/60.0) AS [ETA Hours],
@@ -57,11 +58,12 @@ def mssql_connect(name):
 
     state_query = """
     SELECT name, user_access_desc, is_read_only, state_desc, recovery_model_desc
-    FROM sys.databases WHERE name = {0}
+    FROM sys.databases WHERE name = '{0}'
     """.format(os.path.splitext(path.basename(name))[0])
 
     insert_listdb_query = """
-    insert [master].[dbo].[ListDb] values(null, {0}, {0}, null, null, null, null, null, null, null, null, null, -1, null, 0)
+    insert [master].[dbo].[ListDb] values(null, '{0}', '{0}', null, null,
+    null, null, null, null, null, null, null, -1, null, 0)
     """.format(os.path.splitext(path.basename(name))[0])
 
     cur.execute(size_query)
@@ -74,18 +76,23 @@ def mssql_connect(name):
     BackupSize: {4}
     BackupStartDate: {5}
     CompressedBackupSize: {6}
-    SummarySize: {7} Gb
+    SummarySize: {7}
             """.format(row_header[2], row_header[8], row_header[9], row_header[11], row_header[12], row_header[17],
-                       row_header[51], str((int(row_header[12]) + int(row_header[51]))/1000/1000/1000)))
+                       row_header[51], str((int(row_header[12]) + int(row_header[51])))))
     cur.execute(restore_query)
+    cur1.execute(state_query)
     cur1.execute(progress_query)
     while cur.nextset():
         cur1.execute(progress_query)
         for row_progress in cur1.fetchall():
             print('ID: {0} | Decimal: {1}'.format(row_progress[0], row_progress[2]))
     cur.execute(state_query)
-    if cur.fetchone() == 'ONLINE':
-        cur1.execute(insert_listdb_query)
+    row = cur.fetchone()
+    state = ''
+    if row is not None:
+        state = row[3]
+    if 'ONLINE' in state:
+        cur.execute(insert_listdb_query)
     cur1.close()
     cur.close()
     connection.close()
@@ -122,5 +129,26 @@ def restore(request):
         for back in range(len(request.GET.getlist('backup'))):
             mssql_connect(request.GET.getlist('backup')[back])
         return HttpResponse(render_to_response('success.html', {}))
+    except Exception as ThisEx:
+        return HttpResponse(render_to_response('error.html', {'ThisEx': ThisEx}))
+
+
+def remove_from_listdb(name):
+    connection = pyodbc.connect(driver='{SQL Server}',
+                                server='oirc-srv-test04', Trusted_Connection=True, autocommit=True)
+    remove_listdb_query = "delete from [master].[dbo].[ListDb] where name = '{0}'".\
+        format(name)
+    cur = connection.cursor()
+    cur.execute(remove_listdb_query)
+    cur.close()
+    connection.close()
+
+
+def remove_database(request):
+    try:
+        for i in range(len(request.GET.getlist('base'))):
+                remove_from_listdb(request.GET.getlist('base')[i])
+        return HttpResponse(
+            render_to_response('index.html', {'backup_dir': list(get_backup_dir()), 'list_db': list(get_list_db())}))
     except Exception as ThisEx:
         return HttpResponse(render_to_response('error.html', {'ThisEx': ThisEx}))
