@@ -1,0 +1,26 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Project</title>
+    <link rel="stylesheet" type="text/css" href="{% static "css/style.css" %}">
+    <link rel="stylesheet" type="text/css" href="{% static "bootstrap-3.3.7-dist/css/bootstrap.min.css" %}">
+</head>
+<body>
+    <div class="container">
+        <div class="navbar navbar-inverse navbar-fixed-top">
+            <div class="container">
+                <div class="navbar-header">
+                    <div class="col-sm-6"><a class="navbar-brand" href="/">Project</a></div>
+                </div>
+            </div>
+        </div>
+        {% block index %}{% endblock %}
+        {% block error %}{% endblock %}
+        {% block success %}{% endblock %}
+    </div>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="{% static "bootstrap-3.3.7-dist/js/bootstrap.min.js" %}"></script>
+</body>
+</html>

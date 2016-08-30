@@ -1,0 +1,40 @@
+{% extends 'main.html' %}
+{% block index %}
+        <div class="content">
+            <div class="col-sm-6">
+                <div style="height: 600px; overflow: auto;">
+                    <table class="table table-bordered">
+                        {% for element in list_db %}
+                        <tr>
+                            <td>
+                                <div class="checkbox">
+                                    <label style="display: block;"><input type="checkbox" value="">{{ element }}</label>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <form action="/restore">
+                <div class="col-sm-6" style="padding-bottom: 20px;">
+                    <div style="height: 600px; overflow: auto;">
+                        <table class="table table-bordered backup-table">
+                            {% for element in backup_dir %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="backup" value="{{ element }}"> {{ element }}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="container">
+                        <input type="submit" class="btn btn-success" value="Restore">
+                </div>
+            </form>
+        </div>
+{% endblock %}
