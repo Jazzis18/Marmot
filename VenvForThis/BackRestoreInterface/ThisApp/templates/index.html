@@ -1,9 +1,9 @@
 {% extends 'main.html' %}
 {% block index %}
         <div class="content">
-            <div class="col-sm-6">
+            <div class="col-md-6">
                 <form action="/remove">
-                    <div style="height: 600px; overflow: auto;">
+                    <div style="height: 450px; overflow: auto;">
                         <table class="table table-bordered">
                             {% for element in list_db %}
                             <tr>
@@ -15,14 +15,12 @@
                             </tbody>
                         </table>
                     </div>
-                    <div class="container">
-                        <input type="submit" class="btn btn-danger" value="Remove">
-                    </div>
+                    <div class="padding-button"><input type="submit" class="btn btn-danger" value="Remove selected database"></div>
                 </form>
             </div>
-            <form action="/restore">
-                <div class="col-sm-6" style="padding-bottom: 20px;">
-                    <div style="height: 600px; overflow: auto;">
+            <div class="col-md-6">
+                <form action="/restore">
+                    <div style="height: 450px; overflow: auto;">
                         <table class="table table-bordered backup-table">
                             {% for element in backup_dir %}
                             <tr>
@@ -34,10 +32,8 @@
                             </tbody>
                         </table>
                     </div>
-                </div>
-                <div class="container">
-                    <input type="submit" class="btn btn-success" value="Restore">
-                </div>
-            </form>
+                    <div class="padding-button"><input type="submit" class="btn btn-success" value="Restore selected backup"></div>
+                </form>
+            </div>
         </div>
 {% endblock %}
